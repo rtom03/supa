@@ -1,0 +1,31 @@
+{% block content %}
+<div class="ticket-role">
+    <div class="ticket">
+        <span>My Bets</span>
+        <span>Bets History</span>
+    </div>
+    <hr> 
+
+    <!-- This is the dynamic bet slip where games will be added -->
+    <div class="games">
+        <ul id="bet-slip"></ul> <!-- Moved bet-slip inside its own list container -->
+
+        <!-- Fixed content (won't be overridden) -->
+        <div class="proceed"> 
+            <div class="betstake">
+                <p>Bet Stake</p>  
+                <p>#100</p>
+            </div>
+            <div class="potential-winning">
+                <p>Pot. Win</p>
+                <p>#20,000</p>
+            </div>
+        </div>
+        <div class="cashout">
+            <span>Placebet</span>
+        </div>
+    </div>
+
+    <hr><hr>
+</div>
+{% endblock content %}

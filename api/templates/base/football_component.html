@@ -1,0 +1,93 @@
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Football Fixtures</title>
+  </head>
+  <script>
+    // let betSlip = [];
+    let betSlip = JSON.parse(localStorage.getItem("betSlip")) || []; // Load stored bets
+
+
+    function addToTicket(gameId, home, away,homeodd ,awayodd,drawodd) {
+
+
+    let game = { id: gameId, home: home, away: away, odds: { homeodd, awayodd, drawodd } };
+
+        if (!betSlip.some(g => g.id === gameId)) {
+        betSlip.push(game);
+        saveBetSlip(); // Save to localStorage
+        updateBetSlip();
+    }
+    }
+
+    function updateBetSlip() {
+        let betSlipContainer = document.getElementById("bet-slip");
+        betSlipContainer.innerHTML = ""; // Clear previous list
+
+        betSlip.forEach(game => {
+            let item = document.createElement("li");
+            item.textContent = `${game.home} vs ${game.away} - Home @${game.odds.homeodd}, Draw @${game.odds.drawodd}, Away @${game.odds.awayodd}`;
+            let cashout = document.createElement("button");
+            cashout.textContent = "Cashout"
+            
+            // Add remove button
+            let removeBtn = document.createElement("button");
+            removeBtn.textContent = "X";
+            removeBtn.onclick = () => removeFromTicket(game.id);
+            item.appendChild(removeBtn);
+
+           [
+            
+           ] 
+            betSlipContainer.appendChild(item);
+
+        });
+    }
+
+    function saveBetSlip() {
+    localStorage.setItem("betSlip", JSON.stringify(betSlip));
+}
+    function removeFromTicket(gameId) {
+        betSlip = betSlip.filter(game => game.id !== gameId);
+        saveBetSlip(); // Update localStorage
+        updateBetSlip();
+    }
+
+    document.addEventListener("DOMContentLoaded", updateBetSlip);
+
+</script>
+  <body>
+
+    <h1>Football Fixtures</h1>
+      {% for game in fixtures %}
+      <div class="football_fixture">
+          <div class="match">
+            <p>{{game.home}}</p>
+            <span>vs</span>
+            <p>{{game.away}}</p>
+          </div>
+          <div class="odds">
+            <div class="odd_1" onclick="addToTicket('{{ game.id }}', '{{ game.home }}', '{{ game.away }}', '{{ game.homeodd }}', '{{ game.awayodd }}', '{{ game.drawodd }}')">
+              <span >
+                {{game.homeodd}}
+              </span>              
+            </div>
+            <div class="odd_1"  onclick="addToTicket('{{ game.id }}', '{{ game.home }}', '{{ game.away }}', '{{ game.homeodd }}', '{{ game.awayodd }}', '{{ game.drawodd }}')">
+              <span>
+                {{game.drawodd}}
+              </span>              
+            </div> 
+            <div class="odd_1" onclick="addToTicket('{{ game.id }}', '{{ game.home }}', '{{ game.away }}', '{{ game.homeodd }}', '{{ game.awayodd }}', '{{ game.drawodd }}')">
+              <span  >
+                {{game.awayodd}}
+              </span>              
+            </div>
+        </div>
+      </div>
+      {% endfor %}
+  </body>
+</html>
+{% endblock %}

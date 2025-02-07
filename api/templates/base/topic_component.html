@@ -1,0 +1,17 @@
+{% block content %}
+
+<div class="topics">
+  <div class="topics__header">
+    <h2>Category</h2>
+  </div>
+  <ul class="topics__list">
+    <li><a href='{% url "football" %}'>Football</a></li>
+    <li><a href='{% url "basketball" %}'>Basketball</a></li>
+    <li><a href='{% url "hockey" %}'>Hockey</a></li>
+    <li><a href='{% url "nfl" %}'>NFL</a></li>
+    <li><a href='{% url "entertainment" %}'>Entertainment</a></li>
+    <li><a href='{% url "politics" %}'>Politics</a></li>
+  </ul>
+</div>
+
+{% endblock %}
