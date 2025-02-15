@@ -98,7 +98,7 @@ WSGI_APPLICATION = 'bet_app.wsgi.application'
 
 # OR allow only specific origins
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Your React frontend's origin
+    "http://localhost:3000","https://supa-arzf.onrender.com",  # Your React frontend's origin
 ]
 
 CORS_ALLOW_CREDENTIALS = True  # ✅ Allow cookies
