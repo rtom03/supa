@@ -9,7 +9,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from datetime import date
-import requests
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
