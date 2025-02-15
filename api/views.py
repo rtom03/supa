@@ -5,14 +5,196 @@ from django.http import HttpResponse
 from django.db.models import Q
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required  
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from datetime import date
 import requests
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.views import APIView
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
+from rest_framework.permissions import AllowAny
+from rest_framework.serializers import ModelSerializer
+from django.contrib.auth import authenticate
+from .serializers import RegisterSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import LoginSerializer
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
+from .serializers import RoomSerializer, MessageSerializer
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
-# Create your views here.
+class RegisterView(APIView):
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response({
+                "message": "User registered successfully.",
+                "user": {
+                    "username": user.username,
+                    "email": user.email
+                }
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LoginView(APIView):
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            username = serializer.validated_data['username']
+            password = serializer.validated_data['password']
+            user = authenticate(username=username, password=password)
+            if user:
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    "message": "Login successful.",
+                    "user": {
+                        "username": user.username,
+                        "email": user.email,
+                    },
+                    "tokens": {
+                        "refresh": str(refresh),
+                        "access": str(refresh.access_token),
+                    }
+                }, status=status.HTTP_200_OK)
+            return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ProtectedView(APIView):
+    permission_classes = [IsAuthenticated]  # Only authenticated users can access
+
+    def get(self, request):
+        return Response({
+            "message": "This is protected data.",
+            "user": {
+                "username": request.user.username,
+                "email": request.user.email,
+            }
+        }, status=status.HTTP_200_OK)
+
+
+class CreateRoomView(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure only authenticated users can access
+
+    def post(self, request):
+        # Pass request data to the serializer
+        serializer = RoomSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            # Save the room with the current user as the host
+            room = serializer.save(host=request.user)
+            return Response({
+                'status': 'success',
+                'message': 'Room created successfully!',
+                'room': {
+                    'id': room.id,
+                    'name': room.name,
+                    'description': room.description,
+                    'host': room.host.username,
+                }
+            }, status=status.HTTP_201_CREATED)
+        return Response({
+            'status': 'error',
+            'message': 'Invalid data.',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class RoomDetailView(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure only authenticated users can access
+
+    def get(self, request, pk):
+        try:
+            room = Room.objects.get(id=pk)
+            serializer = RoomSerializer(room)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Room.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'Room not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+    def post(self, request, pk):
+        try:
+            room = Room.objects.get(id=pk)
+            body = request.data.get('body')
+
+            if not body:
+                return Response({
+                    'status': 'error',
+                    'message': 'Message body is required.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Create the message
+            message = Message.objects.create(
+                user=request.user,
+                room=room,
+                body=body
+            )
+            room.participants.add(request.user)
+
+            return Response({
+                'status': 'success',
+                'message': 'Message created successfully!',
+                'data': MessageSerializer(message).data
+            }, status=status.HTTP_201_CREATED)
+        except Room.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'Room not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+class HomeView(APIView):
+    def get(self, request):
+        q = request.GET.get('q', '')
+        
+        # Filter rooms based on the search query
+        rooms = Room.objects.filter(
+            Q(topic__name__icontains=q) |
+            Q(name__icontains=q) |
+            Q(description__icontains=q)
+        )
+        
+        # Get the first 5 topics
+        topics = Topic.objects.all()[:5]
+        
+        # Count the number of rooms
+        room_count = rooms.count()
+        
+        # Get the latest 3 messages related to the search query
+        room_message = Message.objects.filter(
+            Q(room__name__icontains=q)
+        ).order_by('-created')[:3]
+        
+        # Serialize the data
+        room_serializer = RoomSerializer(rooms, many=True)
+        # topic_serializer = TopicSerializer(topics, many=True)
+        message_serializer = MessageSerializer(room_message, many=True)
+        
+        # Prepare the response data
+        response_data = {
+            'rooms': room_serializer.data,
+            # 'topics': topic_serializer.data,
+            'room_count': room_count,
+            'room_message': message_serializer.data
+        }
+        
+        # Return the JSON response
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
 
 
 def login_page(request):
@@ -62,41 +244,41 @@ def register_page(request):
     return render(request, 'base/login_register.html', context)
 
 
-def home(request):
-    q = request.GET.get('q') if request.GET.get('q') != None else ''
-    rooms = Room.objects.filter(Q(topic__name__icontains=q) |
-                                Q(name__icontains=q) |
-                                Q(description__icontains=q)
-                                )
+# def home(request):
+#     q = request.GET.get('q') if request.GET.get('q') != None else ''
+#     rooms = Room.objects.filter(Q(topic__name__icontains=q) |
+#                                 Q(name__icontains=q) |
+#                                 Q(description__icontains=q)
+#                                 )
 
-    topics = Topic.objects.all()[0:5]
-    room_count = rooms.count()
-    room_message = Message.objects.filter(
-        Q(room__name__icontains=q)).order_by('-created')[:3]
+#     topics = Topic.objects.all()[0:5]
+#     room_count = rooms.count()
+#     room_message = Message.objects.filter(
+#         Q(room__name__icontains=q)).order_by('-created')[:3]
 
-    context = {'rooms': rooms, 'topics': topics,
-               'room_count': room_count, 'room_message': room_message}
-    return render(request, 'base/home.html', context)
+#     context = {'rooms': rooms, 'topics': topics,
+#                'room_count': room_count, 'room_message': room_message}
+#     return render(request, 'base/home.html', context)
 
 
-@login_required(login_url='login')
-def room(request, pk):
-    room = Room.objects.get(id=pk)
-    comments = room.message_set.all()
-    participants = room.participants.all()
+# @login_required(login_url='login')
+# def room(request, pk):
+#     room = Room.objects.get(id=pk)
+#     comments = room.message_set.all()
+#     participants = room.participants.all()
 
-    if request.method == 'POST':
-        message = Message.objects.create(
-            user=request.user,
-            room=room,
-            body=request.POST.get('body')
-        )
-        room.participants.add(request.user)
-        return redirect('room', pk=room.id)
-    context = {'room': room, 'comments': comments,
-               'participants': participants}
+#     if request.method == 'POST':
+#         message = Message.objects.create(
+#             user=request.user,
+#             room=room,
+#             body=request.POST.get('body')
+#         )
+#         room.participants.add(request.user)
+#         return redirect('room', pk=room.id)
+#     context = {'room': room, 'comments': comments,
+#                'participants': participants}
 
-    return render(request, 'base/room.html', context)
+#     return render(request, 'base/room.html', context)
 
 
 @login_required(login_url='login')
@@ -107,20 +289,15 @@ def create_room(request):
 
     if request.method == 'POST':
         form = RoomForm(request.POST)
-        # topic_name = request.POST.get('topic')
-        # topic, created = Topic.objects.get_or_create(name=topic_name)
+      
 
         Room.objects.create(
             host=request.user,
-            # topic=topic,
             name=request.POST.get('name'),
             description=request.POST.get('description')
 
         )
-        # if form.is_valid():
-        #     room = form.save(commit=False)
-        #     room.host = request.user
-        #     room.save()
+       
         return redirect('home')
     context = {'form': form}
     return render(request, 'base/room_form.html', context)
@@ -214,6 +391,8 @@ def activity(request):
 
 def football(request):
     # Replace with your actual API key
+
+
     APIkey = "pC6q3bn1g3Ivi6EG"
     current_date = date.today()
     from_date = current_date.strftime("%Y-%m-%d")

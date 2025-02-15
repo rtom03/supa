@@ -11,8 +11,10 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
-import dj_database_url
+# import dj_database_url
 import os 
+from datetime import timedelta
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,9 +43,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api.apps.ApiConfig',
+     'rest_framework',
+     'corsheaders',
+    'rest_framework_simplejwt',
+
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Add this line at the top
     'django.middleware.security.SecurityMiddleware',
      "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -52,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.common.CommonMiddleware',  
 ]
 
 ROOT_URLCONF = 'bet_app.urls'
@@ -74,8 +82,33 @@ TEMPLATES = [
     },
 ]
 
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
+
 WSGI_APPLICATION = 'bet_app.wsgi.application'
 
+
+
+# Allow all origins (not recommended for production)
+# CORS_ALLOW_ALL_ORIGINS = True
+
+# OR allow only specific origins
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # Your React frontend's origin
+]
+
+CORS_ALLOW_CREDENTIALS = True  # ✅ Allow cookies
+
+
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -88,7 +121,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-DATABASES['default'] = dj_database_url.parse("postgresql://prophecy_db_user:A1M2JyoJjYcuyVGFEGBK6rDHF3YyXjIC@dpg-cu7b8ibv2p9s73bf60bg-a.oregon-postgres.render.com/prophecy_db")
+# DATABASES['default'] = dj_database_url.parse("postgresql://prophecy_db_user:A1M2JyoJjYcuyVGFEGBK6rDHF3YyXjIC@dpg-cu7b8ibv2p9s73bf60bg-a.oregon-postgres.render.com/prophecy_db")
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
