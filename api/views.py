@@ -28,6 +28,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import TokenError
+
 
 
 class RegisterView(APIView):
@@ -67,6 +69,28 @@ class LoginView(APIView):
                 }, status=status.HTTP_200_OK)
             return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class LogoutView(APIView):
+    def post(self, request):
+        try:
+            # Get the refresh token from the request data
+            refresh_token = request.data.get('refresh')
+            if not refresh_token:
+                return Response({"error": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Blacklist the refresh token
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+
+            return Response({"message": "Logout successful."}, status=status.HTTP_200_OK)
+        except TokenError as e:
+            # Handle invalid or expired tokens
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # Handle other exceptions
+            return Response({"error": "An error occurred during logout."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)        
 
 class ProtectedView(APIView):
     permission_classes = [IsAuthenticated]  # Only authenticated users can access
@@ -115,7 +139,17 @@ class RoomDetailView(APIView):
         try:
             room = Room.objects.get(id=pk)
             serializer = RoomSerializer(room)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+
+            messages = room.message_set.all()  # or use the related_name if specified in the model
+
+            message_serializer = MessageSerializer(messages, many=True)
+
+            response_data = serializer.data
+            response_data['messages'] = message_serializer.data
+
+            return Response(response_data, status=status.HTTP_200_OK)
+
+            # return Response(serializer.data, status=status.HTTP_200_OK)
         except Room.DoesNotExist:
             return Response({
                 'status': 'error',

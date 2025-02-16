@@ -5,7 +5,7 @@ from .views import LoginView
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import CreateRoomView
 from .views import RoomDetailView
-from .views import HomeView,ProtectedView
+from .views import HomeView,ProtectedView,LogoutView
 
 
 
@@ -20,6 +20,7 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('createroom/', CreateRoomView.as_view(), name='create_room'),
     path('room/<str:pk>/', RoomDetailView.as_view(), name='room_detail'),
+    path('logout/',LogoutView.as_view(),name='logout')
 
 
     # path('logout/', views.logout_page, name='logout'),
