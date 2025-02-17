@@ -1,11 +1,7 @@
 from django.urls import path
 from . import views
-from .views import RegisterView
-from .views import LoginView
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import CreateRoomView
-from .views import RoomDetailView
-from .views import HomeView,ProtectedView,LogoutView
+from .views import HomeView,ProtectedView,LogoutView,DeleteRoomAPIView, RoomDetailView, CreateRoomView,LoginView,RegisterView
 
 
 
@@ -20,6 +16,8 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('createroom/', CreateRoomView.as_view(), name='create_room'),
     path('room/<str:pk>/', RoomDetailView.as_view(), name='room_detail'),
+    path('room/<str:pk>/delete/', DeleteRoomAPIView.as_view(), name='delete-room'),
+
     path('logout/',LogoutView.as_view(),name='logout')
 
 

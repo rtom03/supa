@@ -230,6 +230,26 @@ class HomeView(APIView):
 
 
 
+class DeleteRoomAPIView(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+
+    def delete(self, request, pk, format=None):
+        try:
+            room = Room.objects.get(id=pk)
+        except Room.DoesNotExist:
+            return Response({"error": "Room not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the requesting user is the host of the room
+        if request.user != room.host:
+            return Response({"error": "Access Denied"}, status=status.HTTP_403_FORBIDDEN)
+
+        # Delete the room
+        room.delete()
+        return Response({"message": "Room deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+
+
+
 def login_page(request):
     page = 'login'
 
