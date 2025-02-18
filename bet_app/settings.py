@@ -123,7 +123,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-# DATABASES['default'] = dj_database_url.parse("postgresql://prophecy_db_user:A1M2JyoJjYcuyVGFEGBK6rDHF3YyXjIC@dpg-cu7b8ibv2p9s73bf60bg-a.oregon-postgres.render.com/prophecy_db")
+DATABASES['default'] = dj_database_url.parse("postgresql://prophecy_db_user:A1M2JyoJjYcuyVGFEGBK6rDHF3YyXjIC@dpg-cu7b8ibv2p9s73bf60bg-a.oregon-postgres.render.com/prophecy_db")
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
