@@ -118,12 +118,19 @@ SIMPLE_JWT = {
 #postgresql://prophecy_db_user:A1M2JyoJjYcuyVGFEGBK6rDHF3YyXjIC@dpg-cu7b8ibv2p9s73bf60bg-a.oregon-postgres.render.com/prophecy_db
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.parse("postgresql://neondb_owner:npg_rj0ZO5ElupSH@ep-restless-sound-a9w6ny6l-pooler.gwc.azure.neon.tech/neondb?sslmode=require")
 }
-DATABASES['default'] = dj_database_url.parse("postgresql://prophecy_db_user:A1M2JyoJjYcuyVGFEGBK6rDHF3YyXjIC@dpg-cu7b8ibv2p9s73bf60bg-a.oregon-postgres.render.com/prophecy_db")
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'postgres',
+#         'USER': 'postgres',
+#         'PASSWORD': 'pacey01$',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
