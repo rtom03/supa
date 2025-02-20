@@ -23,7 +23,7 @@ from .serializers import LoginSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from .serializers import RoomSerializer, MessageSerializer
+from .serializers import RoomSerializer, MessageSerializer,UserProfileSerializer
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -246,6 +246,22 @@ class DeleteRoomAPIView(APIView):
         # Delete the room
         room.delete()
         return Response({"message": "Room deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+
+
+class UserProfileAPIView(APIView):
+    def get(self, request, pk, format=None):
+        try:
+            user = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "User not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = UserProfileSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 

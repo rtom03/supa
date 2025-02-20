@@ -71,3 +71,14 @@ class RoomFormSerializer(serializers.ModelSerializer):
             'host': {'read_only': True},  # Prevent modification of host
             'participants': {'read_only': True},  # Prevent modification of participants
         }
+
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    rooms = RoomSerializer(many=True, read_only=True)
+    room_message = MessageSerializer(many=True, read_only=True)
+    # topics = TopicSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'rooms', 'room_message', 'topics']        
