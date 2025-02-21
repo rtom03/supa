@@ -40,3 +40,21 @@ class Message(models.Model):
 
     def __str__(self):
         return self.body[0:50]
+
+
+class Ticket(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    total_odds = models.FloatField(default=1.0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Ticket {self.id} by {self.user.username}"
+
+class TicketGame(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
+    selected_team = models.CharField(max_length=255)  # e.g., "Team A" or "Team B"
+    odds = models.FloatField()
+
+    def __str__(self):
+        return f"{self.game.name} on {self.ticket.id}"        

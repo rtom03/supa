@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from .models import Room,Message
+from .models import Room,Message,Ticket,TicketGame
 
 
 
@@ -75,6 +75,7 @@ class RoomFormSerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+
     rooms = RoomSerializer(many=True, read_only=True)
     room_message = MessageSerializer(many=True, read_only=True)
     # topics = TopicSerializer(many=True, read_only=True)
@@ -82,3 +83,25 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'rooms', 'room_message', 'topics']        
+
+
+
+
+class TicketGameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TicketGame
+        fields = ['game', 'selected_team', 'odds']
+
+class TicketSerializer(serializers.ModelSerializer):
+    games = TicketGameSerializer(many=True)
+
+    class Meta:
+        model = Ticket
+        fields = ['id', 'user', 'games', 'total_odds', 'is_active', 'created_at']
+
+    def create(self, validated_data):
+        games_data = validated_data.pop('games')
+        ticket = Ticket.objects.create(**validated_data)
+        for game_data in games_data:
+            TicketGame.objects.create(ticket=ticket, **game_data)
+        return ticket
